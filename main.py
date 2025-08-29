@@ -77,8 +77,8 @@ def create_bloom_filter_visualization(bloom_filter, width=800, height=600):
         font_medium = ImageFont.load_default()
         font_small = ImageFont.load_default()
     
-    # Calculate bit array visualization
-    bit_size = min(20, (width - 100) // bloom_filter.size)
+    # Calculate bit array visualization - ensure minimum size
+    bit_size = max(1, min(20, (width - 100) // bloom_filter.size))
     bit_array_width = bloom_filter.size * bit_size
     start_x = (width - bit_array_width) // 2
     start_y = 100
@@ -95,9 +95,10 @@ def create_bloom_filter_visualization(bloom_filter, width=800, height=600):
         color = 'green' if bloom_filter.bit_array[i] == 1 else 'lightgray'
         border_color = 'darkgreen' if bloom_filter.bit_array[i] == 1 else 'gray'
         
-        # Draw bit
-        draw.rectangle([x, y, x + bit_size - 2, y + bit_size - 2], 
-                      fill=color, outline=border_color)
+        # Draw bit - ensure positive dimensions
+        right = x + max(1, bit_size - 2)
+        bottom = y + max(1, bit_size - 2)
+        draw.rectangle([x, y, right, bottom], fill=color, outline=border_color)
         
         # Draw index
         if i % 10 == 0:  # Show every 10th index
@@ -136,8 +137,8 @@ def create_hash_visualization(bloom_filter, element, width=800, height=600):
         font_medium = ImageFont.load_default()
         font_small = ImageFont.load_default()
     
-    # Calculate bit array visualization
-    bit_size = min(20, (width - 100) // bloom_filter.size)
+    # Calculate bit array visualization - ensure minimum size
+    bit_size = max(1, min(20, (width - 100) // bloom_filter.size))
     bit_array_width = bloom_filter.size * bit_size
     start_x = (width - bit_array_width) // 2
     start_y = 100
@@ -164,9 +165,10 @@ def create_hash_visualization(bloom_filter, element, width=800, height=600):
             color = 'lightgray'  # Bit clear
             border_color = 'gray'
         
-        # Draw bit
-        draw.rectangle([x, y, x + bit_size - 2, y + bit_size - 2], 
-                      fill=color, outline=border_color)
+        # Draw bit - ensure positive dimensions
+        right = x + max(1, bit_size - 2)
+        bottom = y + max(1, bit_size - 2)
+        draw.rectangle([x, y, right, bottom], fill=color, outline=border_color)
         
         # Draw index
         if i % 10 == 0:
@@ -228,8 +230,8 @@ def create_comparison_visualization(bloom_filters, width=1200, height=800):
         # Draw filter name
         draw.text((x_offset, y_offset), name, fill='black', font=font_medium)
         
-        # Calculate bit visualization
-        bit_size = min(8, (filter_width - 20) // bf.size)
+        # Calculate bit visualization - ensure minimum size
+        bit_size = max(1, min(8, (filter_width - 20) // bf.size))
         bit_array_width = bf.size * bit_size
         start_x = x_offset + (filter_width - bit_array_width) // 2
         start_y = y_offset + 30
@@ -242,8 +244,10 @@ def create_comparison_visualization(bloom_filters, width=1200, height=800):
             color = 'green' if bf.bit_array[j] == 1 else 'lightgray'
             border_color = 'darkgreen' if bf.bit_array[j] == 1 else 'gray'
             
-            draw.rectangle([x, y, x + bit_size - 1, y + bit_size - 1], 
-                          fill=color, outline=border_color)
+            # Ensure positive dimensions
+            right = x + max(1, bit_size - 1)
+            bottom = y + max(1, bit_size - 1)
+            draw.rectangle([x, y, right, bottom], fill=color, outline=border_color)
         
         # Draw statistics
         stats_y = start_y + bit_size + 10
