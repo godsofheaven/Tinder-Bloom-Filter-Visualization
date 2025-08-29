@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinder Bloom Filter Visualizer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin: 20px auto;
+            padding: 30px;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #00b894, #00a085);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 184, 148, 0.3);
+        }
+        
+        .btn-info {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(116, 185, 255, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #fd79a8, #e84393);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(253, 121, 168, 0.3);
+        }
+        
+        .result-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner-border {
+            color: #ff6b6b;
+        }
+        
+        .info-badge {
+            background: linear-gradient(45deg, #00b894, #00a085);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .parameter-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #ff6b6b;
+            transition: all 0.3s ease;
+        }
+        
+        .parameter-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .tab-button {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+        
+        .tab-button:hover {
+            background: #fd79a8;
+            color: white;
+            border-color: #fd79a8;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .status-indicator {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .tinder-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        .profile-card {
+            background: linear-gradient(135deg, #ff6b6b, #fd79a8);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .match-indicator {
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .match-yes {
+            background: #00b894;
+            color: white;
+        }
+        
+        .match-no {
+            background: #fd79a8;
+            color: white;
+        }
+        
+        .match-maybe {
+            background: #fdcb6e;
+            color: white;
+        }
+        
+        .explanation-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #74b9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="main-container">
+                    <div class="text-center mb-4">
+                        <h1 class="display-4 fw-bold text-danger">
+                            <i class="fas fa-heart"></i> Tinder Bloom Filter Visualizer
+                        </h1>
+                        <p class="lead text-muted">
+                            See how Tinder uses Bloom filters to efficiently check if you've already swiped on someone
+                        </p>
+                    </div>
+
+                    <!-- Tinder Context Explanation -->
+                    <div class="explanation-box">
+                        <h5><i class="fas fa-lightbulb"></i> How Tinder Uses Bloom Filters</h5>
+                        <p class="mb-2">
+                            <strong>Problem:</strong> Tinder needs to quickly check if you've already swiped on a profile without storing every single swipe in memory.
+                        </p>
+                        <p class="mb-2">
+                            <strong>Solution:</strong> Use a Bloom filter to track swiped profiles. It can tell you:
+                        </p>
+                        <ul class="mb-0">
+                            <li><span class="text-success"><i class="fas fa-check"></i> "Definitely haven't swiped"</span> - Show this profile</li>
+                            <li><span class="text-warning"><i class="fas fa-question"></i> "Might have swiped"</span> - Double-check database (rare)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Control Panel -->
+                    <div class="control-panel">
+                        <h4 class="mb-3">
+                            <i class="fas fa-cogs"></i> Tinder Bloom Filter Configuration
+                        </h4>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="parameter-card">
+                                    <label for="filterSize" class="form-label fw-bold">
+                                        <i class="fas fa-users"></i> User Pool Size (bits)
+                                    </label>
+                                    <select class="form-select" id="filterSize">
+                                        <option value="50">50 users</option>
+                                        <option value="100" selected>100 users</option>
+                                        <option value="200">200 users</option>
+                                        <option value="500">500 users</option>
+                                        <option value="1000">1000 users</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="parameter-card">
+                                    <label for="numHashes" class="form-label fw-bold">
+                                        <i class="fas fa-hashtag"></i> Hash Functions
+                                    </label>
+                                    <select class="form-select" id="numHashes">
+                                        <option value="2">2</option>
+                                        <option value="3" selected>3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary" onclick="createFilter()">
+                                        <i class="fas fa-plus-circle"></i> Create Tinder Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Navigation -->
+                    <div class="tab-container">
+                        <div class="d-flex flex-wrap mb-3">
+                            <button class="tab-button active" onclick="showTab('swiping')">
+                                <i class="fas fa-heart"></i> Swiping Simulation
+                            </button>
+                            <button class="tab-button" onclick="showTab('checking')">
+                                <i class="fas fa-search"></i> Check Profile
+                            </button>
+                            <button class="tab-button" onclick="showTab('comparison')">
+                                <i class="fas fa-balance-scale"></i> Performance Comparison
+                            </button>
+                            <button class="tab-button" onclick="showTab('analysis')">
+                                <i class="fas fa-chart-line"></i> Analysis
+                            </button>
+                        </div>
+                        
+                        <!-- Swiping Simulation Tab -->
+                        <div id="swiping" class="tab-content active">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="result-card">
+                                        <h5><i class="fas fa-heart"></i> Swipe Right (Like)</h5>
+                                        <div class="mb-3">
+                                            <label for="singleProfile" class="form-label">Profile ID to Like:</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="singleProfile" placeholder="e.g., user_123, sarah_456">
+                                                <button class="btn btn-success" onclick="addProfile()">
+                                                    <i class="fas fa-heart"></i> Swipe Right
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="multipleProfiles" class="form-label">Multiple Profiles (comma-separated):</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="multipleProfiles" placeholder="user_123, sarah_456, mike_789">
+                                                <button class="btn btn-success" onclick="addMultipleProfiles()">
+                                                    <i class="fas fa-heart"></i> Swipe All
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="result-card">
+                                        <h5><i class="fas fa-user-friends"></i> Sample Profiles</h5>
+                                        <div class="profile-card">
+                                            <h6><i class="fas fa-user"></i> Sarah, 25</h6>
+                                            <p class="mb-2">Loves hiking, coffee, and travel</p>
+                                            <small>Profile ID: sarah_456</small>
+                                        </div>
+                                        <div class="profile-card">
+                                            <h6><i class="fas fa-user"></i> Mike, 28</h6>
+                                            <p class="mb-2">Software engineer, gym enthusiast</p>
+                                            <small>Profile ID: mike_789</small>
+                                        </div>
+                                        <div class="profile-card">
+                                            <h6><i class="fas fa-user"></i> Emma, 24</h6>
+                                            <p class="mb-2">Artist, yoga instructor, dog lover</p>
+                                            <small>Profile ID: emma_321</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Check Profile Tab -->
+                        <div id="checking" class="tab-content">
+                            <div class="result-card">
+                                <h5><i class="fas fa-search"></i> Check if Profile was Swiped</h5>
+                                <div class="mb-3">
+                                    <label for="checkProfile" class="form-label">Profile ID to Check:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="checkProfile" placeholder="Enter profile ID to check">
+                        <button class="btn btn-info" onclick="checkProfile()">
+                            <i class="fas fa-search"></i> Check Profile
+                        </button>
+                    </div>
+                </div>
+                <div id="checkResult"></div>
+                
+                <div class="explanation-box mt-3">
+                    <h6><i class="fas fa-info-circle"></i> What This Means for Tinder:</h6>
+                    <ul class="mb-0">
+                        <li><strong class="text-success">"DEFINITELY NOT SWIPED"</strong> → Show this profile to user</li>
+                        <li><strong class="text-warning">"MIGHT BE SWIPED"</strong> → Check database to be sure (rare case)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comparison Tab -->
+        <div id="comparison" class="tab-content">
+            <div class="result-card">
+                <h5><i class="fas fa-balance-scale"></i> Compare Different Tinder Configurations</h5>
+                <p class="text-muted">Compare Bloom filters with different user pool sizes and hash functions</p>
+                <button class="btn btn-primary" onclick="compareFilters()">
+                    <i class="fas fa-balance-scale"></i> Run Comparison
+                </button>
+            </div>
+        </div>
+        
+        <!-- Analysis Tab -->
+        <div id="analysis" class="tab-content">
+            <div class="result-card">
+                <h5><i class="fas fa-chart-line"></i> Performance Analysis</h5>
+                <p class="text-muted">Analyze how different configurations affect Tinder's performance</p>
+                <button class="btn btn-primary" onclick="performanceAnalysis()">
+                    <i class="fas fa-chart-line"></i> Run Analysis
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Processing...</p>
+    </div>
+
+    <!-- Results -->
+    <div id="results" style="display: none;">
+        <div class="result-card">
+            <h5><i class="fas fa-eye"></i> Tinder Bloom Filter Visualization</h5>
+            <div class="text-center">
+                <img id="visualizationImage" alt="Bloom Filter Visualization" class="img-fluid">
+            </div>
+            <div class="mt-3">
+                <span class="info-badge" id="filterInfo">
+                    <i class="fas fa-info-circle"></i> Filter Status: <span id="filterStatus">Not Created</span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let currentFilter = null;
+
+    function showLoading() {
+        document.getElementById('loading').style.display = 'block';
+    }
+
+    function hideLoading() {
+        document.getElementById('loading').style.display = 'none';
+    }
+
+    function showTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Remove active class from all tab buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected tab
+        document.getElementById(tabName).classList.add('active');
+        
+        // Add active class to clicked button
+        event.target.classList.add('active');
+    }
+
+    function createFilter() {
+        showLoading();
+        
+        const size = parseInt(document.getElementById('filterSize').value);
+        const numHashes = parseInt(document.getElementById('numHashes').value);
+        
+        fetch('/create_filter', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                size: size,
+                num_hashes: numHashes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('visualizationImage').src = 'data:image/png;base64,' + data.visualization;
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('filterStatus').textContent = `Created (${data.size} users, ${data.num_hashes} hashes)`;
+                currentFilter = true;
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            alert('An error occurred while creating the filter.');
+        });
+    }
+
+    function addProfile() {
+        const profile = document.getElementById('singleProfile').value.trim();
+        if (!profile) {
+            alert('Please enter a profile ID to swipe on.');
+            return;
+        }
+        
+        showLoading();
+        
+        fetch('/add_element', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                element: profile
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('visualizationImage').src = 'data:image/png;base64,' + data.visualization;
+                document.getElementById('filterStatus').textContent = `${data.elements_count} profiles swiped, FP Rate: ${data.false_positive_rate.toFixed(4)}`;
+                document.getElementById('singleProfile').value = '';
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            alert('An error occurred while adding the profile.');
+        });
+    }
+
+    function addMultipleProfiles() {
+        const profiles = document.getElementById('multipleProfiles').value.trim();
+        if (!profiles) {
+            alert('Please enter profiles to swipe on.');
+            return;
+        }
+        
+        showLoading();
+        
+        fetch('/add_multiple', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                elements: profiles
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('visualizationImage').src = 'data:image/png;base64,' + data.visualization;
+                document.getElementById('filterStatus').textContent = `${data.total_elements} profiles swiped, FP Rate: ${data.false_positive_rate.toFixed(4)}`;
+                document.getElementById('multipleProfiles').value = '';
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            alert('An error occurred while adding profiles.');
+        });
+    }
+
+    function checkProfile() {
+        const profile = document.getElementById('checkProfile').value.trim();
+        if (!profile) {
+            alert('Please enter a profile ID to check.');
+            return;
+        }
+        
+        showLoading();
+        
+        fetch('/check_element', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                element: profile
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('visualizationImage').src = 'data:image/png;base64,' + data.visualization;
+                
+                const resultDiv = document.getElementById('checkResult');
+                const statusClass = data.is_in_filter ? 'status-warning' : 'status-success';
+                const statusText = data.is_in_filter ? 'MIGHT BE SWIPED' : 'DEFINITELY NOT SWIPED';
+                const icon = data.is_in_filter ? 'question' : 'check';
+                
+                resultDiv.innerHTML = `
+                    <div class="match-indicator ${data.is_in_filter ? 'match-maybe' : 'match-yes'}">
+                        <i class="fas fa-${icon}"></i> 
+                        "${profile}" - ${statusText}
+                    </div>
+                    <small class="text-muted">Hash positions: [${data.hash_positions.join(', ')}]</small>
+                `;
+                
+                document.getElementById('checkProfile').value = '';
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            alert('An error occurred while checking the profile.');
+        });
+    }
+
+    function compareFilters() {
+        showLoading();
+        
+        const configurations = [
+            {size: 50, hashes: 2},
+            {size: 100, hashes: 3},
+            {size: 200, hashes: 4},
+            {size: 500, hashes: 5}
+        ];
+        
+        fetch('/compare_filters', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                configurations: configurations
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('visualizationImage').src = 'data:image/png;base64,' + data.visualization;
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('filterStatus').textContent = `Comparison of ${data.configurations} configurations`;
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            alert('An error occurred while comparing filters.');
+        });
+    }
+
+    function performanceAnalysis() {
+        showLoading();
+        
+        const configurations = [
+            {size: 50, hashes: 2},
+            {size: 100, hashes: 3},
+            {size: 200, hashes: 4},
+            {size: 500, hashes: 5}
+        ];
+        
+        fetch('/performance_analysis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                configurations: configurations
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                document.getElementById('visualizationImage').src = 'data:image/png;base64,' + data.visualization;
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('filterStatus').textContent = 'Performance Analysis Results';
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            alert('An error occurred while analyzing performance.');
+        });
+    }
+
+    // Enter key handlers
+    document.getElementById('singleProfile').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addProfile();
+        }
+    });
+
+    document.getElementById('multipleProfiles').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addMultipleProfiles();
+        }
+    });
+
+    document.getElementById('checkProfile').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            checkProfile();
+        }
+    });
+</script>
+</body>
+</html>
